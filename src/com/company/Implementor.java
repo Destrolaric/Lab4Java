@@ -12,7 +12,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -33,8 +32,28 @@ public class Implementor implements Impler {
         }
     }
 
+    public static @NotNull String getPackageName(@NotNull Class<?> token) {
+        if (token.getPackage() == null) {
+            return "";
+        } else {
+            return token.getPackage().getName();
+        }
+    }
+
+    private static @NotNull String setDefault(@NotNull Class<?> type) {  // gives default values for given types
+        if (type.isPrimitive()) {
+            if (Boolean.TYPE.equals(type))
+                return "false";
+            else if (Void.TYPE.equals(type))
+                return "";
+            else
+                return "0";
+        } else
+            return "null";
+    }
+
     private @NotNull Set<Class<?>> findUsedClasses(Class<?> token) {   //detect all used classes from same package and standard classes
-        Set<Class<?>> classes = new HashSet<Class<?>>();
+        Set<Class<?>> classes = new HashSet<>();
         for (Method method : getMethods(token)) {
             for (Class<?> paramType : method.getParameterTypes()) {
                 if (paramType.isArray()) {
@@ -104,7 +123,7 @@ public class Implementor implements Impler {
     }
 
     private @NotNull List<Method> getMethods(Class<?> token) {   // get methods from interface that need to implement
-        List<Method> methods = new ArrayList<Method>();
+        List<Method> methods = new ArrayList<>();
         if (token == null)
             return methods;
 
@@ -160,19 +179,10 @@ public class Implementor implements Impler {
     }
 
     StringBuilder addBody(StringBuilder text, @NotNull Class<?> token) throws ImplerException {
-        text = addFields(text, token);
-        text = addMethods(text, token);
+        addFields(text, token);
+        addMethods(text, token);
         return text;
 
-    }
-
-
-    public static @NotNull String getPackageName(@NotNull Class<?> token) {
-        if (token.getPackage() == null) {
-            return "";
-        } else {
-            return token.getPackage().getName();
-        }
     }
 
     @Override
@@ -187,22 +197,10 @@ public class Implementor implements Impler {
             writer.close();
 
 
-        } catch (NullPointerException | URISyntaxException e) {
+        } catch (NullPointerException e) {
             throw new ImplerException(e);
         }
 
-    }
-
-    private static @NotNull String setDefault(@NotNull Class<?> type) {  // gives default values for given types
-        if (type.isPrimitive()) {
-            if (Boolean.TYPE.equals(type))
-                return "false";
-            else if (Void.TYPE.equals(type))
-                return "";
-            else
-                return "0";
-        } else
-            return "null";
     }
 
     void addHeader(@NotNull StringBuilder text, @NotNull Class<?> token) throws ImplerException {
@@ -327,7 +325,7 @@ public class Implementor implements Impler {
     }
 
 
-    void addConstructors(@NotNull Class<?> token, StringBuilder out) throws IOException {
+    void addConstructors(@NotNull Class<?> token, StringBuilder out) {
         Constructor<?>[] constructors = token.getDeclaredConstructors();
         boolean defaultConstructor = false;
         if (constructors.length == 0)
@@ -350,7 +348,7 @@ public class Implementor implements Impler {
             out.append("    public ").append(token.getSimpleName()).append("Impl").append("()");
             if (constructors[k].getExceptionTypes().length != 0) {
                 out.append(" throws ");
-                Class[] es = constructors[k].getExceptionTypes();
+                Class<?>[] es = constructors[k].getExceptionTypes();
                 for (int i = 0; i < es.length; ++i) {
                     out.append(es[i].getSimpleName());
                     if (i < es.length - 1)
@@ -372,8 +370,8 @@ public class Implementor implements Impler {
         }
     }
 
-    public Path createPathToFile(Class<?> token, @NotNull Path path,String suffix) {
-        return path.resolve(getPackageName(token).replace('.', File.separatorChar)).resolve(String.format("%s.%s", token.getSimpleName()+"Impl", suffix));
+    public Path createPathToFile(Class<?> token, @NotNull Path path, String suffix) {
+        return path.resolve(getPackageName(token).replace('.', File.separatorChar)).resolve(String.format("%s.%s", token.getSimpleName() + "Impl", suffix));
     }
 
     public void createDir(@NotNull Path root) throws ImplerException {
@@ -388,17 +386,15 @@ public class Implementor implements Impler {
         }
     }
 
-    StringBuilder generateClass(Class<?> token, Path root) throws IllegalAccessException, IOException, ImplerException, URISyntaxException {
+    StringBuilder generateClass(Class<?> token, Path root) throws ImplerException {
         StringBuilder generatedCode = new StringBuilder();
         addHeader(generatedCode, token);
         addConstructors(token, generatedCode);
         generatedCode = addBody(generatedCode, token);
         generatedCode.append("}");
         return generatedCode;
-        //System.out.println(generatedCode);
 
-
-
-        }
 
     }
+
+}

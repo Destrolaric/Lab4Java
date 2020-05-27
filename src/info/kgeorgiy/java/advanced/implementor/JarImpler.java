@@ -13,7 +13,7 @@ public interface JarImpler extends Impler {
      * Generated class classes name should be same as classes name of the type token with <tt>Impl</tt> suffix
      * added.
      *
-     * @param token type token to create implementation for.
+     * @param token   type token to create implementation for.
      * @param jarFile target <tt>.jar</tt> file.
      * @throws ImplerException when implementation cannot be generated.
      */

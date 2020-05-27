@@ -25,9 +25,10 @@ import java.util.zip.ZipEntry;
  *
  */
 
-public class JarImplementor extends Implementor implements  JarImpler  {
-    private  Path tempDir;
-    public static void main(String[] args) throws ClassNotFoundException, ImplerException, IllegalAccessException, IOException {
+public class JarImplementor extends Implementor implements JarImpler {
+    private Path tempDir;
+
+    public static void main(String[] args) throws IllegalAccessException, IOException {
         if (args.length != 2 && args.length != 3) {
             System.err.println("Expected 2 or 3 arguments, given " + args.length);
             System.exit(1);
@@ -68,10 +69,33 @@ public class JarImplementor extends Implementor implements  JarImpler  {
         System.exit(0);
     }
 
+    private static Path createFile(Path path) throws IOException {
+        Files.createDirectories(path.getParent());
+        if (!path.toFile().exists()) {
+            Files.createFile(path);
+        }
+        return path;
+    }
+
+    private static Path createTempDirectory(Path root) throws IOException {
+        String randomDirectoryName = "__temp_" + getRandomAlNumString() + "__";
+        return Files.createTempDirectory(root, randomDirectoryName);
+    }
+
+    private static String getRandomAlNumString() {
+        final String supportedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        char[] chars = new char[10];
+        Random random = new Random();
+        for (int i = 0; i < chars.length; ++i) {
+            chars[i] = supportedChars.charAt(random.nextInt(supportedChars.length()));
+        }
+        return new String(chars);
+    }
+
     private void compileJavaClass(@NotNull Class<?> token) throws ImplerException {
 
         String javaSourcePath = tempDir.resolve(token.getPackageName().replace('.', File.separatorChar))
-                .resolve(token.getSimpleName()+"Impl"+ ".java").toString();
+                .resolve(token.getSimpleName() + "Impl" + ".java").toString();
 
         String cp;
         try {
@@ -97,33 +121,14 @@ public class JarImplementor extends Implementor implements  JarImpler  {
             throw new ImplerException("Error during compiling generated java classes");
         }
     }
-    private void createJarFile(@NotNull Path rootofJar,Class<?> token) throws IOException, ImplerException {
-        add( rootofJar,token);
+
+    private void createJarFile(@NotNull Path rootofJar, Class<?> token) throws IOException, ImplerException {
+        add(rootofJar, token);
         //jarOutputStream.close();
 
     }
-    private static Path createFile(Path path) throws IOException {
-        Files.createDirectories(path.getParent());
-        if (!path.toFile().exists()) {
-            Files.createFile(path);
-        }
-        return path;
-    }
-    private static Path createTempDirectory(Path root) throws IOException {
-        String randomDirectoryName = "__temp_" + getRandomAlNumString() + "__";
-        return Files.createTempDirectory(root, randomDirectoryName);
-    }
-    private static String getRandomAlNumString() {
-        final String supportedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        char[] chars = new char[10];
-        Random random = new Random();
-        for (int i = 0; i < chars.length; ++i) {
-            chars[i] = supportedChars.charAt(random.nextInt(supportedChars.length()));
-        }
-        return new String(chars);
-    }
 
-    private void add(Path target,Class<?> token) throws IOException, ImplerException {
+    private void add(Path target, Class<?> token) throws IOException, ImplerException {
 
         Manifest manifest = new Manifest();
         String version = "1.0.0";
@@ -137,27 +142,27 @@ public class JarImplementor extends Implementor implements  JarImpler  {
                     "/" + token.getSimpleName() + "Impl" + ".class";
 
             Path binaryPath = Paths.get(tempDir.toString(),
-                    token.getPackageName().replace('.', File.separatorChar), token.getSimpleName()+"Impl" + ".class");
+                    token.getPackageName().replace('.', File.separatorChar), token.getSimpleName() + "Impl" + ".class");
 
             outputStream.putNextEntry(new ZipEntry(zipEntryPath));
             Files.copy(binaryPath, outputStream);
-            
-        }
-             catch(IOException e){
-                throw new ImplerException("Jar creation error", e);
-        }
-        finally {
+
+        } catch (IOException e) {
+            throw new ImplerException("Jar creation error", e);
+        } finally {
             deleteTempDir();
         }
     }
+
     @Override
     public void implementJar(Class<?> token, Path jarFile) throws ImplerException, IllegalAccessException, IOException {
-            checkPossibility(token);
-            tempDir = createTempDirectory(jarFile.toAbsolutePath().getParent());
-            implement(token,tempDir);
-            compileJavaClass(token);
-            createJarFile(jarFile,token);
+        checkPossibility(token);
+        tempDir = createTempDirectory(jarFile.toAbsolutePath().getParent());
+        implement(token, tempDir);
+        compileJavaClass(token);
+        createJarFile(jarFile, token);
     }
+
     private void deleteTempDir() {
         try {
             Files.walkFileTree(tempDir, new SimpleFileVisitor<>() {

@@ -15,11 +15,10 @@ public interface Impler {
      * <tt>root</tt> directory and have correct file name. For example, the implementation of the
      * interface {@link java.util.List} should go to <tt>$root/java/util/ListImpl.java</tt>
      *
-     *
      * @param token type token to create implementation for.
-     * @param root root directory.
+     * @param root  root directory.
      * @throws ImplerException when implementation cannot be
-     * generated.
+     *                         generated.
      */
     void implement(Class<?> token, Path root) throws IllegalAccessException, IOException, ImplerException;
 }
