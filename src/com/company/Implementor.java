@@ -2,7 +2,6 @@ package com.company;
 
 import info.kgeorgiy.java.advanced.implementor.Impler;
 import info.kgeorgiy.java.advanced.implementor.ImplerException;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -42,14 +41,16 @@ public class Implementor implements Impler {
 
     private static @NotNull String setDefault(@NotNull Class<?> type) {  // gives default values for given types
         if (type.isPrimitive()) {
-            if (Boolean.TYPE.equals(type))
+            if (Boolean.TYPE.equals(type)) {
                 return "false";
-            else if (Void.TYPE.equals(type))
+            } else if (Void.TYPE.equals(type)) {
                 return "";
-            else
+            } else {
                 return "0";
-        } else
+            }
+        } else {
             return "null";
+        }
     }
 
     private @NotNull Set<Class<?>> findUsedClasses(Class<?> token) {   //detect all used classes from same package and standard classes
@@ -58,8 +59,9 @@ public class Implementor implements Impler {
             for (Class<?> paramType : method.getParameterTypes()) {
                 if (paramType.isArray()) {
                     Class<?> cls = getFromArray(paramType);
-                    if (!cls.isPrimitive())
+                    if (!cls.isPrimitive()) {
                         classes.add(cls);
+                    }
                 } else if (!paramType.isPrimitive()
                         && !paramType.getPackage().getName().startsWith("java.lang")
                         && !paramType.getPackage().getName().equals(token.getPackage().getName())
@@ -69,8 +71,9 @@ public class Implementor implements Impler {
             }
             if (method.getReturnType().isArray()) {
                 Class<?> cls = getFromArray(method.getReturnType());
-                if (!cls.isPrimitive())
+                if (!cls.isPrimitive()) {
                     classes.add(cls);
+                }
             } else if (!method.getReturnType().isPrimitive()
                     && !method.getReturnType().getPackage().getName().startsWith("java.lang")
                     && !method.getReturnType().getPackage().getName().equals(token.getPackage().getName())) {
@@ -80,8 +83,9 @@ public class Implementor implements Impler {
             for (Class<?> e : method.getExceptionTypes()) {
                 if (e.isArray()) {
                     Class<?> cls = getFromArray(e);
-                    if (!cls.isPrimitive())
+                    if (!cls.isPrimitive()) {
                         classes.add(cls);
+                    }
                 } else if (!e.isPrimitive()
                         && !e.getPackage().getName().startsWith("java.lang")
                         && !e.getPackage().getName().equals(token.getPackage().getName())
@@ -96,8 +100,9 @@ public class Implementor implements Impler {
             for (Class<?> paramType : constructor.getParameterTypes()) {
                 if (paramType.isArray()) {
                     Class<?> cls = getFromArray(paramType);
-                    if (!cls.isPrimitive())
+                    if (!cls.isPrimitive()) {
                         classes.add(cls);
+                    }
                 } else if (!paramType.isPrimitive()
                         && !paramType.getPackage().getName().startsWith("java.lang")
                         && !paramType.getPackage().getName().equals(token.getPackage().getName())
@@ -109,12 +114,12 @@ public class Implementor implements Impler {
             for (Class<?> e : constructor.getExceptionTypes()) {
                 if (e.isArray()) {
                     Class<?> constructors = getFromArray(e);
-                    if (!constructors.isPrimitive())
+                    if (!constructors.isPrimitive()) {
                         classes.add(constructors);
+                    }
                 } else if (!e.isPrimitive()
                         && !e.getPackage().getName().startsWith("java.lang")
-                        && !e.getPackage().getName().equals(token.getPackage().getName())
-                ) {
+                        && !e.getPackage().getName().equals(token.getPackage().getName())) {
                     classes.add(e);
                 }
             }
@@ -124,8 +129,9 @@ public class Implementor implements Impler {
 
     private @NotNull List<Method> getMethods(Class<?> token) {   // get methods from interface that need to implement
         List<Method> methods = new ArrayList<>();
-        if (token == null)
+        if (token == null) {
             return methods;
+        }
 
         methods.addAll(getMethods(token.getSuperclass()));
 
@@ -136,8 +142,9 @@ public class Implementor implements Impler {
         for (Method m : token.getDeclaredMethods()) {
 
             if (Modifier.isNative(m.getModifiers())
-                    || Modifier.isStatic(m.getModifiers()) || m.isSynthetic())
+                    || Modifier.isStatic(m.getModifiers()) || m.isSynthetic()) {
                 continue;
+            }
 
             if (Modifier.isPublic(m.getModifiers()) || Modifier.isProtected(m.getModifiers())
                     || (!Modifier.isProtected(m.getModifiers())
@@ -147,11 +154,7 @@ public class Implementor implements Impler {
                 for (int i = 0; i < methods.size(); ++i) {
                     Method pm = methods.get(i);
 
-                    if (compareMethods(m, pm))     // compare signatures
-                    {
-//                        if (!Modifier.isAbstract(m.getModifiers())) {
-//                            methods.set(i, m);
-//                        }
+                    if (compareMethods(m, pm)) {
                         methods.set(i, m);
                         noAdding = true;
                         break;
@@ -186,7 +189,7 @@ public class Implementor implements Impler {
     }
 
     @Override
-    public void implement(@NotNull Class<?> token, @NotNull Path root) throws ImplerException, IllegalAccessException, IOException {
+    public void implement(@NotNull Class<?> token, @NotNull Path root) throws ImplerException, IOException {
         try {
             checkPossibility(token);
 
@@ -212,10 +215,11 @@ public class Implementor implements Impler {
             text.append("import ").append(c.getCanonicalName()).append(";").append("\n");
         }
         text.append("public class ").append(token.getSimpleName()).append("Impl");
-        if (token.isInterface())
+        if (token.isInterface()) {
             text.append(" implements ").append(token.getCanonicalName()).append(" {\n");
-        else
+        } else {
             text.append(" extends ").append(token.getCanonicalName()).append(" {\n");
+        }
     }
 
     private @NotNull StringBuilder addExceptions(@NotNull Method method) {
@@ -246,13 +250,15 @@ public class Implementor implements Impler {
         return args;
     }
 
-    @Contract("_, _ -> param1")
-    private StringBuilder addMethods(StringBuilder text, @NotNull Class<?> token) {
+    private void addMethods(StringBuilder text, @NotNull Class<?> token) {
         Method[] methods = token.getMethods();
         for (Method method : methods) {
             int modifiers = method.getModifiers();
 
-            if (Modifier.isFinal(modifiers) || Modifier.isNative(modifiers) || Modifier.isPrivate(modifiers) || !Modifier.isAbstract(modifiers)) {
+            if (Modifier.isFinal(modifiers)
+                    || Modifier.isNative(modifiers)
+                    || Modifier.isPrivate(modifiers)
+                    || !Modifier.isAbstract(modifiers)) {
                 continue;
             }
             modifiers ^= Modifier.ABSTRACT;
@@ -271,13 +277,16 @@ public class Implementor implements Impler {
             letter.append(type.getCanonicalName()).append(' ');
 
             letter.append(method.getName());
-            letter.append("(").append(addMethodArgs(method)).append(")").append(addExceptions(method)).append("\n{\n").append("return ").append(setDefault(method.getReturnType())).append(";\n}\n");
+            letter.append("(")
+                    .append(addMethodArgs(method))
+                    .append(")").append(addExceptions(method))
+                    .append("\n{\n").append("return ")
+                    .append(setDefault(method.getReturnType())).append(";\n}\n");
             text.append(letter).append("\n");
         }
-        return text;
     }
 
-    private StringBuilder addFields(StringBuilder text, @NotNull Class<?> token) throws ImplerException {
+    private void addFields(StringBuilder text, @NotNull Class<?> token) throws ImplerException {
 
         Field[] fields = token.getFields();
         for (Field field : fields) {
@@ -288,22 +297,32 @@ public class Implementor implements Impler {
                 String strValue = field.get(token).toString();
                 if (!strValue.isEmpty()) {
                     if (word.equals("String")) {
-                        text.append("\t").append(Modifier.toString(field.getModifiers())).append(" ").append(word).append(" ").append(field.getName()).append("=\"").append(strValue).append("\";\n");
+                        text.append("\t")
+                                .append(Modifier.toString(field.getModifiers())).append(" ")
+                                .append(word).append(" ").append(field.getName())
+                                .append("=\"").append(strValue).append("\";\n");
                     } else {
-                        text.append("\t").append(Modifier.toString(field.getModifiers())).append(" ").append(word).append(" ").append(field.getName()).append("=").append(strValue).append(";\n");
+                        text.append("\t").append(Modifier.toString(field.getModifiers()))
+                                .append(" ").append(word).append(" ")
+                                .append(field.getName())
+                                .append("=").append(strValue)
+                                .append(";\n");
                     }
                 } else {
 
-                    text.append("\t").append(Modifier.toString(field.getModifiers())).append(" ").append(field.getType()).append(" ").append(field.getName()).append(";\n");
+                    text.append("\t")
+                            .append(Modifier.toString(field.getModifiers()))
+                            .append(" ").append(field.getType())
+                            .append(" ").append(field.getName())
+                            .append(";\n");
                 }
-                return text;
+                return;
             } catch (IllegalAccessException e) {
                 throw new ImplerException("Access violated", e);
             }
 
         }
 
-        return text;
     }
 
     void checkPossibility(Class<?> token) throws ImplerException {
@@ -315,8 +334,9 @@ public class Implementor implements Impler {
             }
         }
 
-        if (token.getDeclaredConstructors().length == 0)
+        if (token.getDeclaredConstructors().length == 0) {
             flag = false;
+        }
 
 
         if (flag || Modifier.isFinal(token.getModifiers())) {
@@ -328,11 +348,13 @@ public class Implementor implements Impler {
     void addConstructors(@NotNull Class<?> token, StringBuilder out) {
         Constructor<?>[] constructors = token.getDeclaredConstructors();
         boolean defaultConstructor = false;
-        if (constructors.length == 0)
+        if (constructors.length == 0) {
             defaultConstructor = true;
+        }
         for (Constructor<?> constructor : constructors) {
-            if (Modifier.isPrivate(constructor.getModifiers()))
+            if (Modifier.isPrivate(constructor.getModifiers())) {
                 continue;
+            }
             if (constructor.getParameterTypes().length == 0) {
                 defaultConstructor = true;
                 break;
@@ -341,8 +363,9 @@ public class Implementor implements Impler {
 
         if (!defaultConstructor) {
             int k = 0;
-            while ((Modifier.isPrivate(constructors[k].getModifiers())))
+            while ((Modifier.isPrivate(constructors[k].getModifiers()))) {
                 ++k;
+            }
             Class<?>[] params = constructors[k].getParameterTypes();
             out.append("\n");
             out.append("    public ").append(token.getSimpleName()).append("Impl").append("()");
@@ -351,8 +374,9 @@ public class Implementor implements Impler {
                 Class<?>[] es = constructors[k].getExceptionTypes();
                 for (int i = 0; i < es.length; ++i) {
                     out.append(es[i].getSimpleName());
-                    if (i < es.length - 1)
+                    if (i < es.length - 1) {
                         out.append(", ");
+                    }
                 }
             }
             out.append("{").append("\n");
@@ -360,8 +384,9 @@ public class Implementor implements Impler {
             for (int i = 0; i < params.length; ++i) {
                 out.append("(").append(params[i].getSimpleName()).append(")");
                 out.append(setDefault(params[i]));
-                if (i < params.length - 1)
+                if (i < params.length - 1) {
                     out.append(", ");
+                }
             }
             out.append(");").append("\n");
             out.append("    }");
@@ -371,7 +396,9 @@ public class Implementor implements Impler {
     }
 
     public Path createPathToFile(Class<?> token, @NotNull Path path, String suffix) {
-        return path.resolve(getPackageName(token).replace('.', File.separatorChar)).resolve(String.format("%s.%s", token.getSimpleName() + "Impl", suffix));
+        return path.resolve(getPackageName(token)
+                .replace('.', File.separatorChar))
+                .resolve(String.format("%s.%s", token.getSimpleName() + "Impl", suffix));
     }
 
     public void createDir(@NotNull Path root) throws ImplerException {
