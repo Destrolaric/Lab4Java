@@ -110,10 +110,8 @@ public class JarImplementor extends Implementor implements JarImpler {
         }
 
         JavaCompiler javaCompiler = ToolProvider.getSystemJavaCompiler();
-        var args = new String[]{
-                "-cp",
-                System.getProperty("java.class.path") + File.pathSeparator
-                        + javaSourcePath + File.pathSeparator + cp, javaSourcePath
+        var args = new String[]{"-cp", System.getProperty("java.class.path") + File.pathSeparator + javaSourcePath
+                + File.pathSeparator + cp, javaSourcePath
         };
 
 
